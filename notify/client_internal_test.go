@@ -122,7 +122,7 @@ func TestPost(t *testing.T) {
 
 			ctx, cancel := context.WithTimeout(context.Background(), tt.t)
 			defer cancel()
-			res := ns.post(ctx, tt.r.Body)
+			res := ns.Post(ctx, tt.r.Body)
 
 			// unexpected errors
 			if res.Err != nil && tt.r.Err == nil {

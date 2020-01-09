@@ -58,7 +58,7 @@ type PostResult struct {
 	Err  error
 }
 
-func (ns *NotificationService) post(ctx context.Context, msg []byte) PostResult {
+func (ns *NotificationService) Post(ctx context.Context, msg []byte) PostResult {
 	req, err := http.NewRequest(http.MethodPost, ns.targetURL, bytes.NewBuffer(msg))
 	if err != nil {
 		return PostResult{
