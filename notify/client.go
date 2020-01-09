@@ -1,9 +1,8 @@
-package notifier
+package notify
 
 import (
 	"bytes"
 	"context"
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"net"
@@ -12,16 +11,12 @@ import (
 )
 
 type NotificationService struct {
-	client      *http.Client
-	target      string // target URL
-	concurrency int    // must not be 0
+	client    *http.Client
+	targetURL string
 }
 
 // New returns a reference to a NotificationService.
-func New(target string, concurrency int) (*NotificationService, error) {
-	if concurrency < 1 {
-		return nil, errors.New("concurrency must be > 0")
-	}
+func New(targetURL string) (*NotificationService, error) {
 	// we use a custom transport to control the idle connections settings.
 	// thus, we can avoid closing connections to quickly. since we connect
 	// to the same host and port always we aim to save handshakes
@@ -36,19 +31,15 @@ func New(target string, concurrency int) (*NotificationService, error) {
 		IdleConnTimeout:     90 * time.Second,
 		TLSHandshakeTimeout: 5 * time.Second,
 	}
-	client := &http.Client{
-		Transport: t,
-	}
 	return &NotificationService{
-		client:      client,
-		target:      target,
-		concurrency: concurrency,
+		client:    &http.Client{Transport: t},
+		targetURL: targetURL,
 	}, nil
 }
 
 type PostErr struct {
-	Err      string         `json:"error"`
-	Response *http.Response `json:"-"` // Will not be marshalled
+	Err      string
+	Response *http.Response
 }
 
 func (e PostErr) Error() string {
@@ -61,24 +52,26 @@ func (e PostErr) Error() string {
 		e.Err)
 }
 
-// PostResult encloses the results and error of a Post request.
+// PostResult wraps the result and error of a Post request.
 type PostResult struct {
-	Msg  []byte `json:"message"`
-	Resp []byte `json:"response_body"`
-	Err  error  `json:"error"`
+	Body []byte
+	Err  error
 }
 
 func (ns *NotificationService) post(ctx context.Context, msg []byte) PostResult {
-	// when passing a io.Closer as the body, it is closed after the request
-	// has been sent.
-	resp, err := http.Post(ns.target, "text/plain", ioutil.NopCloser(bytes.NewReader(msg)))
+	req, err := http.NewRequest(http.MethodPost, ns.targetURL, bytes.NewBuffer(msg))
 	if err != nil {
 		return PostResult{
-			Msg: msg,
-			Err: PostErr{
-				Err:      err.Error(),
-				Response: resp,
-			},
+			Err: err,
+		}
+	}
+	req = req.WithContext(ctx)
+	req.Header.Set("Content-Type", "text/plain")
+
+	resp, err := ns.client.Do(req)
+	if err != nil {
+		return PostResult{
+			Err: err,
 		}
 	}
 
@@ -93,7 +86,6 @@ func (ns *NotificationService) post(ctx context.Context, msg []byte) PostResult 
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return PostResult{
-			Msg: msg,
 			Err: PostErr{
 				Err:      err.Error(),
 				Response: resp,
@@ -103,7 +95,6 @@ func (ns *NotificationService) post(ctx context.Context, msg []byte) PostResult 
 
 	if resp.StatusCode < 200 || resp.StatusCode > 299 {
 		return PostResult{
-			Msg: msg,
 			Err: PostErr{
 				Err:      string(body),
 				Response: resp,
@@ -113,8 +104,7 @@ func (ns *NotificationService) post(ctx context.Context, msg []byte) PostResult 
 
 	// success
 	return PostResult{
-		Msg:  msg,
-		Resp: body,
+		Body: body,
 	}
 }
 

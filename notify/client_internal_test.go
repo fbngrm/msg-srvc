@@ -20,10 +20,9 @@ var postTests = map[string]struct {
 	s int           // http status code of mock response
 	u string        // url of mock server with the test case id as last segment
 	r PostResult    // expected result
-	b []byte        // request payload
 }{
 	// errors
-	"err1": { // 503 - connection closed unexpectedly / EOF
+	"err1": { // 503 - EOF
 		d: "expect the connection to get closed by the server unexpectedly",
 		t: 10000 * time.Millisecond,
 		s: http.StatusServiceUnavailable,
@@ -48,7 +47,7 @@ var postTests = map[string]struct {
 			Err: errors.New("context deadline exceeded"),
 		},
 	},
-	"err4": { // wrong backend url
+	"err4": { // malformed backend url
 		d: "expect error due to wrong url",
 		t: 10000 * time.Millisecond,
 		r: PostResult{
@@ -67,7 +66,7 @@ var postTests = map[string]struct {
 	},
 }
 
-func TestByID(t *testing.T) {
+func TestPost(t *testing.T) {
 	// mock target backend to receive POST requests
 	targetSrvc := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		segments := strings.Split(r.URL.Path, "/")
@@ -123,7 +122,7 @@ func TestByID(t *testing.T) {
 
 			ctx, cancel := context.WithTimeout(context.Background(), tt.t)
 			defer cancel()
-			res := ns.post(ctx, tt.b)
+			res := ns.post(ctx, tt.r.Body)
 
 			// unexpected errors
 			if res.Err != nil && tt.r.Err == nil {
