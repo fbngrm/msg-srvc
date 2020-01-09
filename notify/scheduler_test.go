@@ -17,7 +17,7 @@ type postClient struct{}
 
 // we use the msg parameter to get the return value from the test cases.
 func (pc *postClient) Post(ctx context.Context, msg []byte) notify.PostResult {
-	tc := schedulerTests[string(msg)]
+	tc := serviceTests[string(msg)]
 	if tc.t { // test timeout
 		time.Sleep(timeout + 10*time.Millisecond)
 	}
@@ -33,7 +33,7 @@ func (pc *postClient) Post(ctx context.Context, msg []byte) notify.PostResult {
 	}
 }
 
-var schedulerTests = map[string]struct {
+var serviceTests = map[string]struct {
 	d string            // description of test case
 	r notify.PostResult // expected result, send by the mock PostClient
 	t bool              // exceed context deadline
@@ -71,7 +71,7 @@ func TestRun(t *testing.T) {
 	timeout := 100 * time.Millisecond
 	concurrency := 2
 
-	s, err := notify.NewScheduler(client, timeout, concurrency)
+	s, err := notify.NewService(client, timeout, concurrency)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -83,7 +83,7 @@ func TestRun(t *testing.T) {
 	out := s.Run(ctx, queue)
 
 	// send the test messages to the queue
-	for _, tc := range schedulerTests {
+	for _, tc := range serviceTests {
 		queue <- tc.r.Body
 	}
 	// note, not closing the queue will result in an inifite loop
@@ -92,7 +92,7 @@ func TestRun(t *testing.T) {
 	for res := range out {
 		// we use the body as the id of the test case
 		id := string(res.Body)
-		tt := schedulerTests[id]
+		tt := serviceTests[id]
 		t.Run(tt.d, func(t *testing.T) {
 			// unexpected errors
 			if res.Err != nil && tt.r.Err == nil {
