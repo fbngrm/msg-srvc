@@ -3,20 +3,19 @@ package notify
 import (
 	"bytes"
 	"context"
-	"fmt"
 	"io/ioutil"
 	"net"
 	"net/http"
 	"time"
 )
 
-type NotificationService struct {
+type HttpClient struct {
 	client    *http.Client
 	targetURL string
 }
 
-// New returns a reference to a NotificationService.
-func New(targetURL string) (*NotificationService, error) {
+// NewHttpClient returns a reference to a HttpClient.
+func NewHttpClient(targetURL string) *HttpClient {
 	// we use a custom transport to control the idle connections settings.
 	// thus, we can avoid closing connections to quickly. since we connect
 	// to the same host and port always we aim to save handshakes
@@ -31,34 +30,13 @@ func New(targetURL string) (*NotificationService, error) {
 		IdleConnTimeout:     90 * time.Second,
 		TLSHandshakeTimeout: 5 * time.Second,
 	}
-	return &NotificationService{
+	return &HttpClient{
 		client:    &http.Client{Transport: t},
 		targetURL: targetURL,
-	}, nil
-}
-
-type PostErr struct {
-	Err      string
-	Response *http.Response
-}
-
-func (e PostErr) Error() string {
-	if e.Response == nil {
-		return e.Err
 	}
-	return fmt.Sprintf("%v %v: %v",
-		e.Response.Request.URL,
-		e.Response.StatusCode,
-		e.Err)
 }
 
-// PostResult wraps the result and error of a Post request.
-type PostResult struct {
-	Body []byte
-	Err  error
-}
-
-func (ns *NotificationService) Post(ctx context.Context, msg []byte) PostResult {
+func (ns *HttpClient) Post(ctx context.Context, msg []byte) PostResult {
 	req, err := http.NewRequest(http.MethodPost, ns.targetURL, bytes.NewBuffer(msg))
 	if err != nil {
 		return PostResult{
@@ -107,7 +85,3 @@ func (ns *NotificationService) Post(ctx context.Context, msg []byte) PostResult 
 		Body: body,
 	}
 }
-
-// We use channels instead of mutexes here since it is faster for frequent
-// writes and makes it convenient to implement a timeout when using the context
-// as well as limiting concurrency via a channel (and thus, follow the `share memory by communicating` proverb).

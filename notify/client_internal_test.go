@@ -103,7 +103,7 @@ func TestPost(t *testing.T) {
 	defer targetSrvc.Close()
 
 	// service to test with a HTTP test client
-	ns := NotificationService{
+	ns := HttpClient{
 		client: targetSrvc.Client(),
 	}
 
