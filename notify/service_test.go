@@ -9,6 +9,7 @@ import (
 
 	"github.com/fgrimme/refurbed/notify"
 	"github.com/rs/zerolog"
+	"go.uber.org/goleak"
 )
 
 const timeout = 100 * time.Millisecond // request timeout
@@ -121,4 +122,9 @@ func TestRun(t *testing.T) {
 		})
 	}
 	<-done
+}
+
+// we test for leaking go routines
+func TestMain(m *testing.M) {
+	goleak.VerifyTestMain(m)
 }
