@@ -85,7 +85,10 @@ func TestPost(t *testing.T) {
 		case http.StatusNotFound:
 			w.WriteHeader(tt.s)
 			w.Header().Set("Content-Type", "text/plain")
-			w.Write([]byte(tt.r.Body))
+			_, err := w.Write([]byte(tt.r.Body))
+			if err != nil {
+				t.Fatal(err)
+			}
 		case http.StatusGatewayTimeout:
 			time.Sleep(tt.t + 10*time.Millisecond)
 		case http.StatusServiceUnavailable:
@@ -94,7 +97,10 @@ func TestPost(t *testing.T) {
 		case http.StatusOK:
 			w.WriteHeader(tt.s)
 			w.Header().Set("Content-Type", "text/plain")
-			w.Write([]byte(tt.r.Body))
+			_, err := w.Write([]byte(tt.r.Body))
+			if err != nil {
+				t.Fatal(err)
+			}
 		default:
 			t.Fatalf("unsupported http status code in test case: %s", id)
 		}

@@ -58,9 +58,10 @@ func (s *Service) Run(ctx context.Context, queue chan string) chan PostResult {
 
 			// we explicitly pass the args here to avoid shadowing
 			go func(ctx context.Context, msg string) {
-				ctx, _ = context.WithTimeout(ctx, s.timeout)
+				ctx, cancel := context.WithTimeout(ctx, s.timeout)
 				out <- s.client.Post(ctx, msg)
 				<-limit
+				cancel()
 			}(ctx, msg)
 		}
 
