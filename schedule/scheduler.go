@@ -39,11 +39,11 @@ func (s *Scheduler) Run(q queue) chan string {
 			select {
 			case <-s.quit:
 				ticker.Stop() // does not close the tick channel
-				s.logger.Info().Str("status", "SIGTERM").Msg("stop scheduler")
+				s.logger.Info().Str("term", "SIGTERM").Msg("stop scheduler")
 				return
 			case <-ticker.C:
 				if q.IsExhausted() {
-					s.logger.Info().Msg("stop scheduler")
+					s.logger.Info().Str("term", "FIN").Msg("stop scheduler")
 					return
 				}
 				msg := q.Pop()
