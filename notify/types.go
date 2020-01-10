@@ -7,7 +7,7 @@ import (
 
 type PostErr struct {
 	Err      string         `json:"error"`
-	Response *http.Response `json:"-"` // Will not be marshalled
+	Response *http.Response `json:"-"` // will not be marshalled
 }
 
 func (e PostErr) Error() string {
@@ -20,7 +20,7 @@ func (e PostErr) Error() string {
 		e.Err)
 }
 
-// PostResult wraps the result and error of a Post request.
+// PostResult represents the result of a Post request.
 type PostResult struct {
 	Msg  string `json:"message"`
 	Body string `json:"response_body"`
