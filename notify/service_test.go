@@ -24,7 +24,8 @@ func (pc *postClient) Post(ctx context.Context, msg string) notify.PostResult {
 	if tc.t { // test timeout
 		time.Sleep(timeout + 10*time.Millisecond)
 	}
-	// test context cancelation due to timeout or call to cancelFunc
+	// test context cancelation due to
+	// timeout or call to CancelFunc
 	if err := ctx.Err(); err != nil {
 		return notify.PostResult{
 			Body: tc.r.Body,
@@ -38,7 +39,7 @@ func (pc *postClient) Post(ctx context.Context, msg string) notify.PostResult {
 
 var serviceTests = map[string]struct {
 	d string            // description of test case
-	r notify.PostResult // expected result, send by the mock PostClient
+	r notify.PostResult // expected result, sent by the mock PostClient
 	t bool              // exceed context deadline
 }{
 	"timeout": {
@@ -87,7 +88,7 @@ func TestRun(t *testing.T) {
 	ctx, cancelFunc := context.WithCancel(context.Background())
 	defer cancelFunc()
 	queue := make(chan string, 10)
-	out, done := s.Run(ctx, queue)
+	out := s.Run(ctx, queue)
 
 	// send the test messages to the queue
 	for _, tc := range serviceTests {
@@ -121,10 +122,9 @@ func TestRun(t *testing.T) {
 			}
 		})
 	}
-	<-done
 }
 
-// we test for leaking go routines
+// test for leaking goroutines
 func TestMain(m *testing.M) {
 	goleak.VerifyTestMain(m)
 }

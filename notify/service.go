@@ -40,12 +40,11 @@ func NewService(c PostClient, timeout time.Duration, concurrency int, logger zer
 // calls get send to the outbound channel.
 // When the inbound channel is closed, the function stops posting and waits until
 // all post requests have returned before closing the outbound channel.
-// Post calls can be canceled by the proviced Context. A derived Context is
-// used to set a deadline to the post calls.
-func (s *Service) Run(ctx context.Context, queue chan string) (chan PostResult, chan struct{}) {
+// Post calls can be canceled by the provided Context. A derived Context is used
+// to set a deadline to the post calls.
+func (s *Service) Run(ctx context.Context, queue chan string) chan PostResult {
 	limit := make(chan struct{}, s.concurrency)
 	out := make(chan PostResult)
-	done := make(chan struct{})
 
 	s.logger.Info().Msg("start notification service")
 	go func() {
@@ -68,13 +67,12 @@ func (s *Service) Run(ctx context.Context, queue chan string) (chan PostResult, 
 		s.logger.Info().Msg("stop notification service")
 
 		// wait until all requests have returned
-		// before closing the output channel
+		// before closing the outbound channel
 		for i := 0; i < s.concurrency; i++ {
 			limit <- struct{}{}
 		}
 		close(out)
-		close(done)
 	}()
 
-	return out, done
+	return out
 }
