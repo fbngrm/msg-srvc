@@ -44,6 +44,10 @@ bar 3
 			t.Errorf("unexpected: %s got: %s\n", want, got)
 		}
 	}
+	s.Stop()
+	if !q.IsDone() {
+		t.Error("expect queue to be done")
+	}
 }
 
 // we test for leaking go routines

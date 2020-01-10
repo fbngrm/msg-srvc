@@ -10,6 +10,7 @@ import (
 type Scanner struct {
 	in     io.Reader
 	queue  *Queue
+	quit   chan struct{}
 	logger zerolog.Logger
 }
 
@@ -17,6 +18,7 @@ func NewScanner(in io.Reader, logger zerolog.Logger) *Scanner {
 	return &Scanner{
 		in:     in,
 		queue:  NewQueue(),
+		quit:   make(chan struct{}, 2),
 		logger: logger,
 	}
 }
@@ -28,18 +30,34 @@ func NewScanner(in io.Reader, logger zerolog.Logger) *Scanner {
 func (s *Scanner) Run() (*Queue, chan error) {
 	s.logger.Info().Msg("start scanner")
 	scanner := bufio.NewScanner(s.in)
-	errC := make(chan error, 1)
+	errC := make(chan error)
 	go func() {
-		for scanner.Scan() {
-			msg := scanner.Text()
-			if len(msg) == 0 {
-				continue
+		defer func() { errC <- scanner.Err() }()
+		for {
+			select {
+			case <-s.quit:
+				s.queue.setDone()
+				s.logger.Info().Str("status", "SIGTERM").Msg("stop scanner")
+				return
+			default:
+				if scanner.Scan() {
+					msg := scanner.Text()
+					if len(msg) == 0 {
+						continue
+					}
+					s.queue.Push(msg)
+				} else {
+					s.queue.setDone()
+					s.logger.Info().Str("status", "EOF").Msg("stop scanner")
+					return
+				}
 			}
-			s.queue.Push(msg)
 		}
-		s.queue.setDone()
-		errC <- scanner.Err()
-		s.logger.Info().Str("status", "EOF").Msg("stop scanner")
 	}()
 	return s.queue, errC
+}
+
+func (s *Scanner) Stop() {
+	s.quit <- struct{}{}
+	close(s.quit)
 }
