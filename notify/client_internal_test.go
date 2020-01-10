@@ -16,8 +16,8 @@ import (
 var postTests = map[string]struct {
 	d string        // description of test case
 	t time.Duration // context timeout
-	s int           // http status code of mock response
-	u string        // url of mock server with the test case id as last segment
+	s int           // HTTP status code of mock response
+	u string        // URL of mock server with the test case id as last segment
 	r PostResult    // expected result
 }{
 	// errors
@@ -39,7 +39,7 @@ var postTests = map[string]struct {
 		},
 	},
 	"err3": { // 504 - timeout
-		d: "expect the context to be cancelled due to timeout",
+		d: "expect the context to be canceled due to timeout",
 		t: 200 * time.Millisecond,
 		s: http.StatusGatewayTimeout,
 		r: PostResult{
@@ -66,7 +66,7 @@ var postTests = map[string]struct {
 }
 
 func TestPost(t *testing.T) {
-	// mock target backend to control responses send to the tested client
+	// mock backend to control responses send to the tested client
 	targetSrvc := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		segments := strings.Split(r.URL.Path, "/")
 		if len(segments) != 2 {
@@ -80,7 +80,7 @@ func TestPost(t *testing.T) {
 			t.Fatalf("missing test case for id: %s", id)
 		}
 		// we base the response on the expected
-		// http status code of the test case
+		// HTTP status code of the test case
 		switch tt.s {
 		case http.StatusNotFound:
 			w.WriteHeader(tt.s)
@@ -102,7 +102,7 @@ func TestPost(t *testing.T) {
 				t.Fatal(err)
 			}
 		default:
-			t.Fatalf("unsupported http status code in test case: %s", id)
+			t.Fatalf("unsupported HTTP status code in test case: %s", id)
 		}
 	}))
 	defer targetSrvc.Close()
