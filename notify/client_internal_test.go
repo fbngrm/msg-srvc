@@ -1,7 +1,6 @@
 package notify
 
 import (
-	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -35,7 +34,7 @@ var postTests = map[string]struct {
 		t: 10000 * time.Millisecond,
 		s: http.StatusNotFound,
 		r: PostResult{
-			Body: []byte("not found"),
+			Body: "not found",
 			Err:  errors.New("404: not found"),
 		},
 	},
@@ -60,7 +59,7 @@ var postTests = map[string]struct {
 		d: "expect success",
 		t: 10000 * time.Millisecond,
 		r: PostResult{
-			Body: []byte("success"),
+			Body: "success",
 		},
 		s: http.StatusOK,
 	},
@@ -86,7 +85,7 @@ func TestPost(t *testing.T) {
 		case http.StatusNotFound:
 			w.WriteHeader(tt.s)
 			w.Header().Set("Content-Type", "text/plain")
-			w.Write(tt.r.Body)
+			w.Write([]byte(tt.r.Body))
 		case http.StatusGatewayTimeout:
 			time.Sleep(tt.t + 10*time.Millisecond)
 		case http.StatusServiceUnavailable:
@@ -95,7 +94,7 @@ func TestPost(t *testing.T) {
 		case http.StatusOK:
 			w.WriteHeader(tt.s)
 			w.Header().Set("Content-Type", "text/plain")
-			w.Write(tt.r.Body)
+			w.Write([]byte(tt.r.Body))
 		default:
 			t.Fatalf("unsupported http status code in test case: %s", id)
 		}
@@ -147,7 +146,7 @@ func TestPost(t *testing.T) {
 				}
 			} else {
 				// expected response
-				if want, got := tt.r.Body, res.Body; bytes.Compare(want, got) != 0 {
+				if want, got := tt.r.Body, res.Body; want != got {
 					t.Errorf("want body\n%+v\ngot\n%+v", want, got)
 				}
 			}

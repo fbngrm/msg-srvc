@@ -4,10 +4,12 @@ import (
 	"context"
 	"errors"
 	"time"
+
+	"github.com/rs/zerolog"
 )
 
 type PostClient interface {
-	Post(ctx context.Context, msg []byte) PostResult
+	Post(ctx context.Context, msg string) PostResult
 }
 
 // Service reads from an input queue and post messages to a PostClient.
@@ -16,10 +18,11 @@ type Service struct {
 	client      PostClient
 	timeout     time.Duration
 	concurrency int // must be greater than 0
+	logger      zerolog.Logger
 }
 
 // NewService returns a reference to a Service.
-func NewService(c PostClient, timeout time.Duration, concurrency int) (*Service, error) {
+func NewService(c PostClient, timeout time.Duration, concurrency int, logger zerolog.Logger) (*Service, error) {
 	if concurrency < 1 {
 		return nil, errors.New("concurrency must be > 0")
 	}
@@ -27,6 +30,7 @@ func NewService(c PostClient, timeout time.Duration, concurrency int) (*Service,
 		client:      c,
 		concurrency: concurrency,
 		timeout:     timeout,
+		logger:      logger,
 	}, nil
 }
 
@@ -38,13 +42,15 @@ func NewService(c PostClient, timeout time.Duration, concurrency int) (*Service,
 // all post requests have returned before closing the outbound channel.
 // Post calls can be canceled by the proviced Context. A derived Context is
 // used to set a deadline to the post calls.
-func (s *Service) Run(ctx context.Context, queue chan []byte) chan PostResult {
+func (s *Service) Run(ctx context.Context, queue chan string) (chan PostResult, chan struct{}) {
 	limit := make(chan struct{}, s.concurrency)
 	out := make(chan PostResult)
+	done := make(chan struct{})
 
+	s.logger.Info().Msg("start notification service")
 	go func() {
 		for msg := range queue {
-			if msg == nil {
+			if msg == "" {
 				continue
 			}
 
@@ -52,12 +58,14 @@ func (s *Service) Run(ctx context.Context, queue chan []byte) chan PostResult {
 			limit <- struct{}{}
 
 			// we explicitly pass the args here to avoid shadowing
-			go func(ctx context.Context, msg []byte) {
+			go func(ctx context.Context, msg string) {
 				ctx, _ = context.WithTimeout(ctx, s.timeout)
 				out <- s.client.Post(ctx, msg)
 				<-limit
 			}(ctx, msg)
 		}
+
+		s.logger.Info().Msg("stop notification service")
 
 		// wait until all requests have returned
 		// before closing the output channel
@@ -65,7 +73,8 @@ func (s *Service) Run(ctx context.Context, queue chan []byte) chan PostResult {
 			limit <- struct{}{}
 		}
 		close(out)
+		close(done)
 	}()
 
-	return out
+	return out, done
 }

@@ -1,12 +1,14 @@
 package notify_test
 
 import (
-	"bytes"
 	"context"
+	"io/ioutil"
+	"log"
 	"testing"
 	"time"
 
 	"github.com/fgrimme/refurbed/notify"
+	"github.com/rs/zerolog"
 )
 
 const timeout = 100 * time.Millisecond // request timeout
@@ -16,7 +18,7 @@ const timeout = 100 * time.Millisecond // request timeout
 type postClient struct{}
 
 // we use the msg parameter to get the return value from the test cases.
-func (pc *postClient) Post(ctx context.Context, msg []byte) notify.PostResult {
+func (pc *postClient) Post(ctx context.Context, msg string) notify.PostResult {
 	tc := serviceTests[string(msg)]
 	if tc.t { // test timeout
 		time.Sleep(timeout + 10*time.Millisecond)
@@ -41,7 +43,7 @@ var serviceTests = map[string]struct {
 	"timeout": {
 		d: "expect context to exceed deadline",
 		r: notify.PostResult{
-			Body: []byte("timeout"), // test id
+			Body: "timeout", // test id
 			Err:  context.DeadlineExceeded,
 		},
 		t: true,
@@ -49,29 +51,33 @@ var serviceTests = map[string]struct {
 	"succ1": {
 		d: "expect success",
 		r: notify.PostResult{
-			Body: []byte("succ1"), // test id
+			Body: "succ1", // test id
 		},
 	},
 	"succ2": {
 		d: "expect success",
 		r: notify.PostResult{
-			Body: []byte("succ2"), // test id
+			Body: "succ2", // test id
 		},
 	},
 	"succ3": {
 		d: "expect success",
 		r: notify.PostResult{
-			Body: []byte("succ3"), // test id
+			Body: "succ3", // test id
 		},
 	},
 }
 
 func TestRun(t *testing.T) {
+	// mute logger in tests
+	logger := zerolog.New(ioutil.Discard)
+	log.SetOutput(logger)
+
 	client := &postClient{}
 	timeout := 100 * time.Millisecond
 	concurrency := 2
 
-	s, err := notify.NewService(client, timeout, concurrency)
+	s, err := notify.NewService(client, timeout, concurrency, logger)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -79,8 +85,8 @@ func TestRun(t *testing.T) {
 	// we use the context to signal requests to return
 	ctx, cancelFunc := context.WithCancel(context.Background())
 	defer cancelFunc()
-	queue := make(chan []byte, 10)
-	out := s.Run(ctx, queue)
+	queue := make(chan string, 10)
+	out, done := s.Run(ctx, queue)
 
 	// send the test messages to the queue
 	for _, tc := range serviceTests {
@@ -109,9 +115,10 @@ func TestRun(t *testing.T) {
 				return
 			}
 			// expected response
-			if want, got := tt.r.Body, res.Body; bytes.Compare(want, got) != 0 {
+			if want, got := tt.r.Body, res.Body; want != got {
 				t.Errorf("want body\n%+v\ngot\n%+v", want, got)
 			}
 		})
 	}
+	<-done
 }

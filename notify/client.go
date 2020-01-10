@@ -1,11 +1,11 @@
 package notify
 
 import (
-	"bytes"
 	"context"
 	"io/ioutil"
 	"net"
 	"net/http"
+	"strings"
 	"time"
 )
 
@@ -36,11 +36,12 @@ func NewHttpClient(targetURL string) *HttpClient {
 	}
 }
 
-func (ns *HttpClient) Post(ctx context.Context, msg []byte) PostResult {
-	req, err := http.NewRequest(http.MethodPost, ns.targetURL, bytes.NewBuffer(msg))
+func (ns *HttpClient) Post(ctx context.Context, msg string) PostResult {
+	req, err := http.NewRequest(http.MethodPost, ns.targetURL, strings.NewReader(msg))
 	if err != nil {
 		return PostResult{
-			Err: err,
+			Msg: msg,
+			Err: PostErr{Err: err.Error()},
 		}
 	}
 	req = req.WithContext(ctx)
@@ -49,7 +50,8 @@ func (ns *HttpClient) Post(ctx context.Context, msg []byte) PostResult {
 	resp, err := ns.client.Do(req)
 	if err != nil {
 		return PostResult{
-			Err: err,
+			Msg: msg,
+			Err: PostErr{Err: err.Error()},
 		}
 	}
 
@@ -64,6 +66,7 @@ func (ns *HttpClient) Post(ctx context.Context, msg []byte) PostResult {
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return PostResult{
+			Msg: msg,
 			Err: PostErr{
 				Err:      err.Error(),
 				Response: resp,
@@ -73,6 +76,7 @@ func (ns *HttpClient) Post(ctx context.Context, msg []byte) PostResult {
 
 	if resp.StatusCode < 200 || resp.StatusCode > 299 {
 		return PostResult{
+			Msg: msg,
 			Err: PostErr{
 				Err:      string(body),
 				Response: resp,
@@ -82,6 +86,7 @@ func (ns *HttpClient) Post(ctx context.Context, msg []byte) PostResult {
 
 	// success
 	return PostResult{
-		Body: body,
+		Msg:  msg,
+		Body: string(body),
 	}
 }
