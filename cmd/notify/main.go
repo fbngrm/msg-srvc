@@ -23,8 +23,8 @@ var (
 
 	targetURL    string
 	concurrency  int
-	interval     time.Duration // milliseconds
-	timeout      time.Duration // milliseconds
+	interval     time.Duration
+	timeout      time.Duration
 	printVersion bool
 )
 
@@ -59,7 +59,7 @@ func main() {
 		Interface("version", version).
 		Logger()
 
-	// Post messages using the provided PostClient.
+	// post messages using the provided PostClient.
 	client := notify.NewHttpClient(targetURL)
 	notifyService, err := notify.NewService(client, timeout, concurrency, logger)
 	if err != nil {
@@ -109,7 +109,7 @@ func main() {
 	if err := <-errC; err == nil {
 		logger.Error().Err(err)
 		// note, Exit does not run deferred functions
-		// so we need to cancel the context
+		// so we need to cancel the context and close channels
 		cancel()
 		close(errC)
 		os.Exit(1)
