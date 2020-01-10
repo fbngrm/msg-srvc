@@ -48,7 +48,7 @@ bar 3
 	// to stop the read loop before checking the queue's state
 	s.Stop()
 	if !q.IsExhausted() {
-		t.Error("expect queue to be done")
+		t.Error("expect queue to be exhausted")
 	}
 }
 
