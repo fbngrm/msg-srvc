@@ -45,11 +45,11 @@ func TestQueue(t *testing.T) {
 				}
 			}
 			if tt.s {
-				q.setDone()
+				q.setReady()
 			}
 		})
 	}
-	if !q.IsDone() {
+	if !q.IsExhausted() {
 		t.Error("expect queue to be done")
 	}
 }

@@ -44,8 +44,10 @@ bar 3
 			t.Errorf("unexpected: %s got: %s\n", want, got)
 		}
 	}
+	// we don't receive an EOF from the strings.Reader so we need
+	// to stop the read loop before checking the queue's state
 	s.Stop()
-	if !q.IsDone() {
+	if !q.IsExhausted() {
 		t.Error("expect queue to be done")
 	}
 }

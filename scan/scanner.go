@@ -7,6 +7,7 @@ import (
 	"github.com/rs/zerolog"
 )
 
+// Scanner reads lines from an io.Reader.
 type Scanner struct {
 	in     io.Reader
 	queue  *Queue
@@ -23,10 +24,8 @@ func NewScanner(in io.Reader, logger zerolog.Logger) *Scanner {
 	}
 }
 
-// Create a scanner to read each map entry line by line
-// Note: We assume the line entry can fit into the scanner's buffer
-// Non-blocking until buffer size is exceeded.
-// default scan token size of the Scanner is 64*1024 bytes
+// Run reades from the Scanners io.Reader until it reaches EOF or a quit signal.
+// Note: We assume a line can fit into the scanner's buffer/token-size (64*1024B).
 func (s *Scanner) Run() (*Queue, chan error) {
 	s.logger.Info().Msg("start scanner")
 	scanner := bufio.NewScanner(s.in)
@@ -36,7 +35,7 @@ func (s *Scanner) Run() (*Queue, chan error) {
 		for {
 			select {
 			case <-s.quit:
-				s.queue.setDone()
+				s.queue.setReady()
 				s.logger.Info().Str("status", "SIGTERM").Msg("stop scanner")
 				return
 			default:
@@ -47,7 +46,7 @@ func (s *Scanner) Run() (*Queue, chan error) {
 					}
 					s.queue.Push(msg)
 				} else {
-					s.queue.setDone()
+					s.queue.setReady()
 					s.logger.Info().Str("status", "EOF").Msg("stop scanner")
 					return
 				}

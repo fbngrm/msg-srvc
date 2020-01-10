@@ -5,10 +5,11 @@ import (
 	"sync"
 )
 
+// Queue is a FIFO list, safe for concurrent access.
 type Queue struct {
 	sync.RWMutex
-	list *list.List
-	done bool
+	list  *list.List
+	ready bool
 }
 
 func NewQueue() *Queue {
@@ -35,16 +36,19 @@ func (q *Queue) Pop() string {
 	return v
 }
 
-func (q *Queue) IsDone() bool {
+// IsExhausted determines if all elements of the queue
+// have been consumed and no future pushes are intended.
+func (q *Queue) IsExhausted() bool {
 	q.Lock()
 	l := q.list.Len()
-	d := q.done
+	r := q.ready
 	q.Unlock()
-	return d && l == 0
+	return r && l == 0
 }
 
-func (q *Queue) setDone() {
+// setReady indicates that no future writes
+func (q *Queue) setReady() {
 	q.Lock()
-	q.done = true
+	q.ready = true
 	q.Unlock()
 }
