@@ -38,8 +38,9 @@ func (q *Queue) Pop() string {
 func (q *Queue) IsDone() bool {
 	q.Lock()
 	l := q.list.Len()
+	d := q.done
 	q.Unlock()
-	return q.done && l == 0
+	return d && l == 0
 }
 
 func (q *Queue) setDone() {

@@ -33,18 +33,21 @@ var queueTests = []struct {
 func TestQueue(t *testing.T) {
 	q := NewQueue()
 	for _, tc := range queueTests {
-		if tc.push != "" {
-			q.Push(tc.push)
-		}
-		if tc.pop != "" {
-			s := q.Pop()
-			if want, got := tc.pop, s; want != got {
-				t.Errorf("want pop %s got %s", want, got)
+		tt := tc
+		t.Run(tt.d, func(t *testing.T) {
+			if tt.push != "" {
+				q.Push(tc.push)
 			}
-		}
-		if tc.s {
-			q.setDone()
-		}
+			if tt.pop != "" {
+				s := q.Pop()
+				if want, got := tt.pop, s; want != got {
+					t.Errorf("want pop %s got %s", want, got)
+				}
+			}
+			if tt.s {
+				q.setDone()
+			}
+		})
 	}
 	if !q.IsDone() {
 		t.Error("expect queue to be done")
