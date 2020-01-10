@@ -55,16 +55,20 @@ Stages keep receiving values from inbound channels until those channels are clos
 
 > Note, the queue can potentially grow until the machine runs out of memory.
 
-### Logs
-The program logs to stderr in a structured but human readable format.
-Results of POST requests are logged to stdout in machine readable format (JSON).
-
 ### Termination
 The program terminates gracefully always.
 In other words, it waits until all requests have returned and have been logged before it shuts down.
 If a interrupt signal is caught, all stages of the pipeline are stopped and requests are canceled via their context.
+If no interrupt is send, it terminates after reading an EOF and all requests have returned.
 It is possible that a request timeout occurs, which leads to a canceled request.
 Request errors are logged.
+
+Note, for sending a EOF manually, on UNIX systems Ctrl+D is used.
+
+### Logs
+The program logs to stderr in a structured and human readable format.
+Stages include the cause termination in the log message, where SIGTERM means a cancellation by interrupt and EOF|FIN means no messages left to process.
+Results of POST requests are logged to stdout in machine readable format (JSON).
 
 ### Configuration
 ```bash
