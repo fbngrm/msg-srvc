@@ -36,7 +36,7 @@ func (s *Scanner) Run() (*Queue, chan error) {
 			select {
 			case <-s.quit:
 				s.queue.setReady()
-				s.logger.Info().Str("status", "SIGTERM").Msg("stop scanner")
+				s.logger.Info().Str("term", "SIGTERM").Msg("stop scanner")
 				return
 			default:
 				if scanner.Scan() {
@@ -47,7 +47,7 @@ func (s *Scanner) Run() (*Queue, chan error) {
 					s.queue.Push(msg)
 				} else {
 					s.queue.setReady()
-					s.logger.Info().Str("status", "EOF").Msg("stop scanner")
+					s.logger.Info().Str("term", "EOF").Msg("stop scanner")
 					return
 				}
 			}
