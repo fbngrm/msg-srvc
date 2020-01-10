@@ -65,7 +65,7 @@ func (s *Service) Run(ctx context.Context, queue chan string) chan PostResult {
 			}(ctx, msg)
 		}
 
-		s.logger.Info().Msg("stop notification service")
+		s.logger.Info().Str("term", "FIN").Msg("stop notification service")
 
 		// wait until all requests have returned
 		// before closing the outbound channel
