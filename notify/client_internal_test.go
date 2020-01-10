@@ -12,7 +12,7 @@ import (
 	"time"
 )
 
-// we test errors first, then success.
+// we test errors first, then success
 var postTests = map[string]struct {
 	d string        // description of test case
 	t time.Duration // context timeout
@@ -66,7 +66,7 @@ var postTests = map[string]struct {
 }
 
 func TestPost(t *testing.T) {
-	// mock target backend to receive POST requests
+	// mock target backend to control responses send to the tested client
 	targetSrvc := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		segments := strings.Split(r.URL.Path, "/")
 		if len(segments) != 2 {
@@ -109,8 +109,8 @@ func TestPost(t *testing.T) {
 	for id, tc := range postTests {
 		tt := tc
 		t.Run(tt.d, func(t *testing.T) {
-			// we need to set the target URL, either the correct one of the
-			// mock backend or we get it from the test case when testing errors
+			// when testing successful requests, the target URL is set to the
+			// mock backend's URL. when testing errors the test case URL is used
 			targetURL := targetSrvc.URL
 			if tt.u != "" {
 				targetURL = tt.u

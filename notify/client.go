@@ -9,6 +9,8 @@ import (
 	"time"
 )
 
+// HttpClient provides a method to make
+// POST requests to a target URL.
 type HttpClient struct {
 	client    *http.Client
 	targetURL string
@@ -36,8 +38,10 @@ func NewHttpClient(targetURL string) *HttpClient {
 	}
 }
 
-func (ns *HttpClient) Post(ctx context.Context, msg string) PostResult {
-	req, err := http.NewRequest(http.MethodPost, ns.targetURL, strings.NewReader(msg))
+// Post sends POST requests to the clients target URL.
+// Responses with a status code between 200-299 are considered successful.
+func (c *HttpClient) Post(ctx context.Context, msg string) PostResult {
+	req, err := http.NewRequest(http.MethodPost, c.targetURL, strings.NewReader(msg))
 	if err != nil {
 		return PostResult{
 			Msg: msg,
@@ -47,7 +51,7 @@ func (ns *HttpClient) Post(ctx context.Context, msg string) PostResult {
 	req = req.WithContext(ctx)
 	req.Header.Set("Content-Type", "text/plain")
 
-	resp, err := ns.client.Do(req)
+	resp, err := c.client.Do(req)
 	if err != nil {
 		return PostResult{
 			Msg: msg,
