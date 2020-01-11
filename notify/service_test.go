@@ -76,7 +76,6 @@ func TestRun(t *testing.T) {
 	log.SetOutput(logger)
 
 	client := &postClient{}
-	timeout := 100 * time.Millisecond
 	concurrency := 2
 
 	s, err := notify.NewService(client, timeout, concurrency, logger)
