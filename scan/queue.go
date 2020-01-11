@@ -25,9 +25,9 @@ func (q *Queue) Push(s string) {
 }
 
 func (q *Queue) Pop() string {
+	var v string
 	q.Lock()
 	e := q.list.Front()
-	var v string
 	if e != nil {
 		v = e.Value.(string)
 		q.list.Remove(e)
@@ -46,7 +46,7 @@ func (q *Queue) IsExhausted() bool {
 	return r && l == 0
 }
 
-// setReady indicates that no future writes
+// setReady indicates that no future writes are intended.
 func (q *Queue) setReady() {
 	q.Lock()
 	q.ready = true
