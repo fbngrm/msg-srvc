@@ -20,7 +20,7 @@ type HttpClient struct {
 func NewHttpClient(targetURL string) *HttpClient {
 	// we use a custom transport to control the idle connections settings.
 	// thus, we can avoid closing connections to quickly. since we connect
-	// to the same host and port always can to save handshakes
+	// to the same host and port always we save handshakes
 	t := &http.Transport{
 		Proxy: http.ProxyFromEnvironment,
 		DialContext: (&net.Dialer{
