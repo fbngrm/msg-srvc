@@ -1,15 +1,10 @@
-.PHONY: all build run test test-race test-cover lint
-
-all: run
+.PHONY: build test test-race test-cover lint
 
 build:
 	mkdir -p bin
 	go build -o bin/notify \
 		-ldflags "-X main.version=$${VERSION:-$$(git describe --tags --always --dirty)}" \
         ./cmd/notify/main.go
-
-run:
-	docker-compose up
 
 test:
 	go test -v -timeout=1m ./...
