@@ -50,6 +50,6 @@ func TestQueue(t *testing.T) {
 		})
 	}
 	if !q.IsExhausted() {
-		t.Error("expect queue to be done")
+		t.Error("expect queue to be exhausted")
 	}
 }
