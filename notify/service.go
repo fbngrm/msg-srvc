@@ -73,6 +73,7 @@ func (s *Service) Run(ctx context.Context, queue chan string) chan PostResult {
 			limit <- struct{}{}
 		}
 		close(out)
+		close(limit)
 	}()
 
 	return out
