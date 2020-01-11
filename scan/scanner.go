@@ -24,7 +24,7 @@ func NewScanner(in io.Reader, logger zerolog.Logger) *Scanner {
 	}
 }
 
-// Run reades from the Scanners io.Reader until it reaches EOF or a quit signal.
+// Run reads from the Scanners io.Reader until it reaches EOF or a quit signal.
 // Note: We assume a line can fit into the scanner's buffer/token-size (64*1024B).
 func (s *Scanner) Run() (*Queue, chan error) {
 	s.logger.Info().Msg("start scanner")
