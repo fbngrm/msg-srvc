@@ -5,7 +5,7 @@ This program reads messages from stdin and send them as POST requests to a targe
 This section assumes there is a go, make and git installation available on the system.
 
 ### Build
-A Makefile is provided which should be used to test, build and run the program.
+A Makefile is provided which can be used to test and build the program.
 Builds will be placed in the `/bin` directory.
 Binaries use the latest git commit hash or tag as a version.
 
@@ -48,10 +48,13 @@ The program consists of three libraries which are used to build a pipeline consi
 `schedule` reads from a queue and sends the messages to an outbound channel, one per time interval.
 `notify` posts HTTP requests to a target URL.
 Requests are sent concurrently, results are returned via a channel.
-Note, since the program posts to the same host always, it tries to keep TCP connections open to save handshake time.
 
 In general, stages close their outbound channels when all the send operations are done.
 Stages keep receiving values from inbound channels until those channels are closed or the senders are unblocked.
+
+Since the program posts to the same host always, it tries to keep TCP connections open to save handshake time.
+
+Since not further specified, it is assumed that messages have the content type `text/plain`.
 
 > Note, the queue can potentially grow until the machine runs out of memory.
 
@@ -83,7 +86,7 @@ Results of POST requests are logged to stdout in machine readable format (JSON).
   -v    print version
 ```
 
-### Dependency management
+## Dependency management
 For handling dependencies, go modules are used.
 This requires to have a go version > 1.11 installed and setting `GO111MODULE=1`.
 If the go version is >= 1.13, modules are enabled by default.
