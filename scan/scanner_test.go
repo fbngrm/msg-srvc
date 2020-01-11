@@ -41,7 +41,7 @@ bar 3
 	}
 	for _, tc := range scanTests {
 		if want, got := tc, q.Pop(); want != got {
-			t.Errorf("unexpected: %s got: %s\n", want, got)
+			t.Errorf("expected: %s got: %s\n", want, got)
 		}
 	}
 	// we don't receive an EOF from the strings.Reader so we need
