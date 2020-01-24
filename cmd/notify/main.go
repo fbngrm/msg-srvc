@@ -70,8 +70,8 @@ func main() {
 	// send one message per interval
 	scheduler := schedule.NewScheduler(interval, logger)
 
-	// the scanner reads from stdin until it reaches EOF or it's Stop method is called.
-	// note, this may consume a large amount of memory which can lead to a crash of the application
+	// the scanner reads from stdin until it reaches EOF or its Stop method is called.
+	// note, this may consume a large amount of memory which can lead to a crash of the application.
 	scanner := scan.NewScanner(os.Stdin, logger)
 	queue, errC := scanner.Run()
 	defer close(errC)
@@ -88,7 +88,7 @@ func main() {
 		<-quit
 		// stop reading from stdin
 		scanner.Stop()
-		// stop send messages to the notification service
+		// stop sending messages to the notification service
 		scheduler.Stop()
 		// cancel POST requests
 		cancel()
